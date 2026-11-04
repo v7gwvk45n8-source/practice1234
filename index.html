@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>영어 단어 학습</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --ink: #1c1915;
+      --muted: #6b645c;
+      --card: #fffdf8;
+      --line: #e4ddd2;
+      --accent: #1f6b4a;
+      --accent-soft: #e7f3ec;
+      --warn: #b45309;
+      --shadow: 0 18px 40px rgba(40, 30, 16, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 400px at 10% -10%, #efe6d4, transparent 60%),
+        radial-gradient(700px 360px at 110% 0%, #dceee4, transparent 55%),
+        var(--bg);
+    }
+
+    .wrap {
+      width: min(720px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 64px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 32px;
+      letter-spacing: -0.04em;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .progress {
+      text-align: right;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress strong {
+      display: block;
+      color: var(--accent);
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    .bar {
+      height: 8px;
+      background: #ebe4d8;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #2f8a60, #1f6b4a);
+      transition: width 0.25s ease;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    button, .choice {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .tabs button, .actions button, .choice {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 9px 16px;
+    }
+
+    .tabs button.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      min-height: 320px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .word {
+      font-size: 52px;
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .phonetic {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .meaning {
+      margin: 18px 0 8px;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+
+    .example {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hint {
+      margin-top: 22px;
+      color: #9a9186;
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .actions button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .actions button.ghost {
+      background: transparent;
+    }
+
+    .quiz .card { cursor: default; }
+
+    .prompt {
+      font-size: 34px;
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .choices {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+      text-align: left;
+    }
+
+    .choice {
+      border-radius: 16px;
+      text-align: left;
+      padding: 14px 16px;
+    }
+
+    .choice.correct {
+      background: var(--accent-soft);
+      border-color: #9dceb4;
+    }
+
+    .choice.wrong {
+      background: #fff1e8;
+      border-color: #f0c2a4;
+      color: var(--warn);
+    }
+
+    .result {
+      margin-top: 14px;
+      min-height: 24px;
+      color: var(--muted);
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 560px) {
+      h1 { font-size: 26px; }
+      .word { font-size: 40px; }
+      .prompt { font-size: 26px; }
+      header { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>영어 단어</h1>
+        <p class="sub">카드를 눌러 뜻을 확인하고, 퀴즈로 복습하세요.</p>
+      </div>
+      <div class="progress">
+        <strong id="knownCount">0 / 12</strong>
+        아는 단어
+      </div>
+    </header>
+
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+
+    <div class="tabs">
+      <button id="tabCard" class="active" type="button">카드</button>
+      <button id="tabQuiz" type="button">퀴즈</button>
+    </div>
+
+    <section id="cardMode">
+      <article class="card" id="flashcard" tabindex="0" aria-label="단어 카드">
+        <div class="label" id="cardLabel">영어</div>
+        <h2 class="word" id="word">apple</h2>
+        <p class="phonetic" id="phonetic">/ˈæp.əl/</p>
+        <p class="meaning hidden" id="meaning">사과</p>
+        <p class="example hidden" id="example">I eat an apple every morning.</p>
+        <p class="hint" id="hint">클릭하거나 스페이스바로 뜻을 확인</p>
+      </article>
+      <div class="actions">
+        <button type="button" id="prev">이전</button>
+        <button type="button" class="primary" id="known">알아요</button>
+        <button type="button" id="unknown">몰라요</button>
+        <button type="button" id="next">다음</button>
+      </div>
+    </section>
+
+    <section id="quizMode" class="quiz hidden">
+      <article class="card">
+        <div class="label">뜻 고르기</div>
+        <h2 class="prompt" id="quizWord">apple</h2>
+        <div class="choices" id="choices"></div>
+        <p class="result" id="quizResult"></p>
+      </article>
+      <div class="actions">
+        <button type="button" class="primary" id="quizNext">다음 문제</button>
+        <button type="button" class="ghost" id="reset">진도 초기화</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const WORDS = [
+      { en: "apple", ipa: "/ˈæp.əl/", ko: "사과", ex: "I eat an apple every morning." },
+      { en: "book", ipa: "/bʊk/", ko: "책", ex: "This book is very interesting." },
+      { en: "water", ipa: "/ˈwɔː.tər/", ko: "물", ex: "Please give me a glass of water." },
+      { en: "friend", ipa: "/frend/", ko: "친구", ex: "She is my best friend." },
+      { en: "school", ipa: "/skuːl/", ko: "학교", ex: "I go to school by bus." },
+      { en: "happy", ipa: "/ˈhæp.i/", ko: "행복한", ex: "I feel happy today." },
+      { en: "morning", ipa: "/ˈmɔːr.nɪŋ/", ko: "아침", ex: "Good morning!" },
+      { en: "family", ipa: "/ˈfæm.əl.i/", ko: "가족", ex: "My family lives in Seoul." },
+      { en: "weather", ipa: "/ˈweð.ər/", ko: "날씨", ex: "The weather is nice today." },
+      { en: "study", ipa: "/ˈstʌd.i/", ko: "공부하다", ex: "I study English every day." },
+      { en: "remember", ipa: "/rɪˈmem.bər/", ko: "기억하다", ex: "I remember your name." },
+      { en: "practice", ipa: "/ˈpræk.tɪs/", ko: "연습하다", ex: "Practice makes perfect." }
+    ];
+
+    const STORAGE_KEY = "vocab-known";
+    let index = 0;
+    let flipped = false;
+    let known = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+    let quizAnswered = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...known]));
+      updateProgress();
+    }
+
+    function updateProgress() {
+      $("knownCount").textContent = `${known.size} / ${WORDS.length}`;
+      $("bar").style.width = `${(known.size / WORDS.length) * 100}%`;
+    }
+
+    function renderCard() {
+      const word = WORDS[index];
+      flipped = false;
+      $("word").textContent = word.en;
+      $("phonetic").textContent = word.ipa;
+      $("meaning").textContent = word.ko;
+      $("example").textContent = word.ex;
+      $("meaning").classList.add("hidden");
+      $("example").classList.add("hidden");
+      $("phonetic").classList.remove("hidden");
+      $("word").classList.remove("hidden");
+      $("cardLabel").textContent = known.has(word.en) ? "영어 · 아는 단어" : "영어";
+      $("hint").textContent = "클릭하거나 스페이스바로 뜻을 확인";
+      $("known").textContent = known.has(word.en) ? "아는 단어 해제" : "알아요";
+    }
+
+    function flip() {
+      flipped = !flipped;
+      $("meaning").classList.toggle("hidden", !flipped);
+      $("example").classList.toggle("hidden", !flipped);
+      $("hint").textContent = flipped ? "다시 클릭하면 단어만 봅니다" : "클릭하거나 스페이스바로 뜻을 확인";
+    }
+
+    function move(step) {
+      index = (index + step + WORDS.length) % WORDS.length;
+      renderCard();
+    }
+
+    function mark(isKnown) {
+      const word = WORDS[index].en;
+      if (isKnown) known.add(word);
+      else known.delete(word);
+      save();
+      move(1);
+    }
+
+    function shuffle(list) {
+      const copy = [...list];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function renderQuiz() {
+      quizAnswered = false;
+      const answer = WORDS[Math.floor(Math.random() * WORDS.length)];
+      const options = shuffle([
+        answer,
+        ...shuffle(WORDS.filter((word) => word.en !== answer.en)).slice(0, 3)
+      ]);
+      $("quizWord").textContent = answer.en;
+      $("quizResult").textContent = "";
+      $("choices").innerHTML = "";
+      options.forEach((option) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice";
+        button.textContent = option.ko;
+        button.addEventListener("click", () => {
+          if (quizAnswered) return;
+          quizAnswered = true;
+          const correct = option.en === answer.en;
+          button.classList.add(correct ? "correct" : "wrong");
+          if (!correct) {
+            [...$("choices").children].find((el) => el.textContent === answer.ko)?.classList.add("correct");
+          } else {
+            known.add(answer.en);
+            save();
+          }
+          $("quizResult").textContent = correct
+            ? `정답입니다. ${answer.ex}`
+            : `정답은 "${answer.ko}" 입니다. ${answer.ex}`;
+        });
+        $("choices").appendChild(button);
+      });
+    }
+
+    function showMode(mode) {
+      const card = mode === "card";
+      $("cardMode").classList.toggle("hidden", !card);
+      $("quizMode").classList.toggle("hidden", card);
+      $("tabCard").classList.toggle("active", card);
+      $("tabQuiz").classList.toggle("active", !card);
+      if (!card) renderQuiz();
+    }
+
+    $("flashcard").addEventListener("click", flip);
+    $("flashcard").addEventListener("keydown", (event) => {
+      if (event.code === "Space" || event.code === "Enter") {
+        event.preventDefault();
+        flip();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if ($("cardMode").classList.contains("hidden")) return;
+      if (event.target !== document.body && event.target !== $("flashcard")) return;
+      if (event.code === "ArrowRight") move(1);
+      if (event.code === "ArrowLeft") move(-1);
+    });
+
+    $("prev").addEventListener("click", () => move(-1));
+    $("next").addEventListener("click", () => move(1));
+    $("known").addEventListener("click", () => {
+      const word = WORDS[index].en;
+      mark(!known.has(word));
+    });
+    $("unknown").addEventListener("click", () => mark(false));
+    $("tabCard").addEventListener("click", () => showMode("card"));
+    $("tabQuiz").addEventListener("click", () => showMode("quiz"));
+    $("quizNext").addEventListener("click", renderQuiz);
+    $("reset").addEventListener("click", () => {
+      known = new Set();
+      save();
+      renderCard();
+    });
+
+    renderCard();
+    updateProgress();
+  </script>
+</body>
+</html>
